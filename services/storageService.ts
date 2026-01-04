@@ -2,10 +2,11 @@
 import { Project, SiteSettings } from '../types.ts';
 import { INITIAL_PROJECTS, DEFAULT_SETTINGS } from '../constants.ts';
 
+// 버전을 v4에서 v5로 변경하여 기존 로컬 스토리지를 초기화하고 최신 데이터를 반영합니다.
 const STORAGE_KEYS = {
-  PROJECTS: 'cinematic_archive_projects_v4',
-  SETTINGS: 'cinematic_archive_settings_v4',
-  INITIALIZED: 'cinematic_archive_init_v4'
+  PROJECTS: 'cinematic_archive_projects_v5',
+  SETTINGS: 'cinematic_archive_settings_v5',
+  INITIALIZED: 'cinematic_archive_init_v5'
 };
 
 class StorageService {
@@ -16,13 +17,9 @@ class StorageService {
   private ensureInitialized() {
     const isInitialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!isInitialized) {
-      // 명시적으로 초기화되지 않은 경우에만 기본 데이터 삽입
-      if (!localStorage.getItem(STORAGE_KEYS.PROJECTS)) {
-        localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
-      }
-      if (!localStorage.getItem(STORAGE_KEYS.SETTINGS)) {
-        localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-      }
+      // 명시적으로 초기화되지 않은 경우 최신 constants.ts 데이터를 삽입
+      localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
     }
   }
