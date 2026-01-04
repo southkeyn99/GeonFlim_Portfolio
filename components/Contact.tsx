@@ -40,8 +40,8 @@ const Contact: React.FC<ContactProps> = ({ settings }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <a href={`mailto:${settings.email}`} className="text-sm md:text-base tracking-[0.2em] font-medium uppercase hover:text-[#c5a059] transition-colors">
-                  {settings.email.toUpperCase()}
+                <a href={`mailto:${settings.email}`} className="text-sm md:text-base tracking-[0.2em] font-medium hover:text-[#c5a059] transition-colors lowercase">
+                  {settings.email}
                 </a>
               </div>
 

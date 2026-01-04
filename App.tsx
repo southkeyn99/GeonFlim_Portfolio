@@ -14,6 +14,7 @@ const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [view, setView] = useState<ViewState>('HOME');
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
@@ -41,7 +42,7 @@ const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setAuthError(false);
     setPasswordInput('');
-  }, [view]);
+  }, [view, selectedProjectId]);
 
   const handleAddProject = async (p: Project) => {
     await storageService.addProject(p);
@@ -79,10 +80,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleProjectSelect = (id: string) => {
+    setSelectedProjectId(id);
+    setView('PROJECT_DETAIL');
+  };
+
   const filteredProjects = useMemo(() => {
-    if (view === 'HOME' || view === 'ADMIN' || view === 'CONTACT') return [];
+    if (view === 'HOME' || view === 'ADMIN' || view === 'CONTACT' || view === 'PROJECT_DETAIL') return [];
     return projects.filter(p => p.category === view);
   }, [projects, view]);
+
+  const currentProject = useMemo(() => {
+    if (view !== 'PROJECT_DETAIL' || !selectedProjectId) return null;
+    return projects.find(p => p.id === selectedProjectId);
+  }, [projects, view, selectedProjectId]);
 
   if (isLoading) {
     return (
@@ -100,9 +111,26 @@ const App: React.FC = () => {
         return (
           <div className="animate-fade-in">
             <Home settings={settings} onExplore={() => setView('DIRECTING')} />
-            <About settings={settings} />
+            <About settings={settings} projects={projects} onProjectClick={handleProjectSelect} />
             <Contact settings={settings} />
           </div>
+        );
+      case 'PROJECT_DETAIL':
+        return currentProject ? (
+          <div className="animate-fade-in pt-20 relative">
+            <button 
+              onClick={() => setView('HOME')}
+              className="fixed top-28 left-10 md:left-20 z-40 flex items-center gap-4 group text-[10px] tracking-[0.4em] uppercase text-neutral-500 hover:text-white transition-colors"
+            >
+              <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+              </svg>
+              Close Project
+            </button>
+            <ProjectDetail project={currentProject} />
+          </div>
+        ) : (
+          <div className="h-screen flex items-center justify-center text-[10px] uppercase tracking-widest text-neutral-700">Project Not Found</div>
         );
       case 'CONTACT':
         return (

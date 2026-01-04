@@ -25,4 +25,4 @@ export interface SiteSettings {
   homeBgImage: string;
 }
 
-export type ViewState = 'HOME' | 'DIRECTING' | 'CINEMATOGRAPHY' | 'AI_FILM' | 'STAFF' | 'ADMIN' | 'CONTACT';
+export type ViewState = 'HOME' | 'DIRECTING' | 'CINEMATOGRAPHY' | 'AI_FILM' | 'STAFF' | 'ADMIN' | 'CONTACT' | 'PROJECT_DETAIL';
