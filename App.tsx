@@ -23,35 +23,11 @@ const App: React.FC = () => {
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState(false);
 
-  // Track the actual view to distinguish between fresh navigation and scroll restoration
   const lastViewRef = useRef<ViewState>(view);
 
   useEffect(() => {
     const initData = async () => {
       try {
-        // Handle Cloud Sync (URL parameter sync)
-        const hash = window.location.hash;
-        if (hash.startsWith('#sync=')) {
-          try {
-            const encoded = hash.split('#sync=')[1];
-            const decoded = JSON.parse(decodeURIComponent(atob(encoded)));
-            
-            if (decoded.projects && decoded.settings) {
-              // Overwrite local DB with shared data
-              for (const p of decoded.projects) {
-                await storageService.addProject(p);
-              }
-              await storageService.saveSettings(decoded.settings);
-              
-              // Clear URL for clean look
-              window.history.replaceState(null, '', window.location.pathname);
-              alert('Cloud Data Synced Successfully!');
-            }
-          } catch (e) {
-            console.error("Sync Failed", e);
-          }
-        }
-
         const [loadedProjects, loadedSettings] = await Promise.all([
           storageService.getProjects(),
           storageService.getSettings()
@@ -59,7 +35,7 @@ const App: React.FC = () => {
         setProjects(loadedProjects);
         setSettings(loadedSettings);
       } catch (error) {
-        console.error("Failed to load data from IndexedDB:", error);
+        console.error("Data Load Error:", error);
       } finally {
         setIsLoading(false);
       }
@@ -67,7 +43,6 @@ const App: React.FC = () => {
     initData();
   }, []);
 
-  // Final and robust scroll management
   useEffect(() => {
     if (isReturning) {
       const timer = setTimeout(() => {
@@ -100,7 +75,7 @@ const App: React.FC = () => {
   };
 
   const handleDeleteProject = async (id: string) => {
-    if (window.confirm('Delete this work?')) {
+    if (window.confirm('정말 삭제하시겠습니까?')) {
       await storageService.deleteProject(id);
       const updated = await storageService.getProjects();
       setProjects(updated);
@@ -124,8 +99,7 @@ const App: React.FC = () => {
   };
 
   const handleProjectSelect = (id: string) => {
-    const currentY = window.scrollY;
-    setScrollPos(currentY);
+    setScrollPos(window.scrollY);
     setIsReturning(false); 
     setSelectedProjectId(id);
     setPreviousView(view);
@@ -152,15 +126,7 @@ const App: React.FC = () => {
     return projects.find(p => p.id === selectedProjectId);
   }, [projects, view, selectedProjectId]);
 
-  if (isLoading) {
-    return (
-      <div className="h-screen w-full bg-[#050505] flex items-center justify-center">
-        <div className="text-[10px] tracking-[0.5em] uppercase text-neutral-500 animate-pulse">
-          Initializing Database...
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return <div className="h-screen bg-black flex items-center justify-center text-[10px] tracking-widest text-neutral-500 uppercase">Loading Cinematic Archive...</div>;
 
   const renderContent = () => {
     switch (view) {
@@ -174,182 +140,93 @@ const App: React.FC = () => {
         );
       case 'PROJECT_DETAIL':
         return currentProject ? (
-          <div className="relative min-h-screen">
-            <button 
-              onClick={handleBack}
-              className="fixed top-28 left-6 md:left-20 z-40 flex items-center gap-4 group text-[10px] tracking-[0.4em] uppercase text-neutral-500 hover:text-white transition-colors bg-black/50 backdrop-blur-md px-4 py-2 rounded-full border border-white/5"
-            >
-              <svg className="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
-              </svg>
-              Go Back
-            </button>
+          <div className="relative">
+            <button onClick={handleBack} className="fixed top-28 left-6 md:left-20 z-40 bg-black/50 backdrop-blur-md px-6 py-3 border border-white/10 text-[10px] tracking-widest uppercase hover:text-[#c5a059] transition-colors">Go Back</button>
             <ProjectDetail project={currentProject} />
           </div>
-        ) : (
-          <div className="h-screen flex items-center justify-center text-[10px] uppercase tracking-widest text-neutral-700">Project Not Found</div>
-        );
+        ) : null;
       case 'CONTACT':
-        return (
-          <div className="animate-fade-in pt-20">
-            <Contact settings={settings} />
-          </div>
-        );
+        return <div className="pt-20"><Contact settings={settings} /></div>;
       case 'ADMIN':
         if (!isAuthenticated) {
           return (
-            <div className="h-screen w-full bg-[#050505] flex items-center justify-center px-6 animate-fade-in">
-              <div className="max-w-md w-full space-y-12 text-center">
-                <div className="space-y-4">
-                  <h2 className="text-[10px] tracking-[0.6em] text-[#c5a059] uppercase font-bold">Security</h2>
-                  <h1 className="text-4xl font-serif-cinematic">Restricted Access</h1>
-                  <p className="text-xs text-neutral-500 tracking-widest uppercase">Authorized Personnel Only</p>
-                </div>
-                
-                <form onSubmit={handleLogin} className="space-y-8">
-                  <div className="relative group">
-                    <input 
-                      type="password" 
-                      autoFocus
-                      value={passwordInput}
-                      onChange={(e) => setPasswordInput(e.target.value)}
-                      placeholder="ENTER PASSCODE"
-                      className={`w-full bg-[#0a0a0a] border-b ${authError ? 'border-red-900' : 'border-neutral-800'} focus:border-[#c5a059] transition-colors py-4 text-center text-sm tracking-[0.5em] outline-none placeholder:text-neutral-800`}
-                    />
-                    {authError && (
-                      <p className="absolute -bottom-6 left-0 w-full text-[9px] text-red-900 tracking-widest uppercase animate-pulse">
-                        Invalid Access Code
-                      </p>
-                    )}
-                  </div>
-                  
-                  <button 
-                    type="submit"
-                    className="w-full bg-white text-black py-4 text-[10px] font-bold uppercase tracking-[0.4em] hover:bg-[#c5a059] transition-all duration-500"
-                  >
-                    Authenticate
-                  </button>
+            <div className="h-screen w-full bg-[#050505] flex items-center justify-center px-6">
+              <div className="max-w-md w-full space-y-8 text-center">
+                <h1 className="text-3xl font-serif-cinematic uppercase tracking-widest">Admin Access</h1>
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <input type="password" autoFocus value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="ENTER PASSCODE" className="w-full bg-transparent border-b border-neutral-800 focus:border-[#c5a059] py-4 text-center tracking-[0.5em] outline-none" />
+                  <button type="submit" className="w-full bg-white text-black py-4 text-[10px] font-bold uppercase tracking-widest">Authenticate</button>
                 </form>
-
-                <button 
-                  onClick={() => handleNavbarNavigate('HOME')}
-                  className="text-[9px] text-neutral-600 hover:text-white transition-colors uppercase tracking-[0.3em]"
-                >
-                  Return to Site
-                </button>
+                <button onClick={() => handleNavbarNavigate('HOME')} className="text-[9px] text-neutral-600 uppercase tracking-widest">Return Home</button>
               </div>
             </div>
           );
         }
         return (
           <AdminPanel 
-            projects={projects}
-            settings={settings}
-            onAdd={handleAddProject}
-            onUpdate={handleUpdateProject}
-            onDelete={handleDeleteProject}
+            projects={projects} settings={settings}
+            onAdd={handleAddProject} onUpdate={handleUpdateProject} onDelete={handleDeleteProject}
             onSaveSettings={handleSaveSettings}
-            onClose={() => {
-                handleNavbarNavigate('HOME');
-                setIsAuthenticated(false);
-            }}
+            onClose={() => { setView('HOME'); setIsAuthenticated(false); }}
           />
         );
       default:
         return (
           <div className="pt-32 md:pt-48 pb-32">
-            <header className="px-6 md:px-24 mb-20 md:mb-32 animate-fade-in">
+            <header className="px-6 md:px-24 mb-20 animate-fade-in">
               <div className="flex items-center gap-4 mb-4">
                 <div className="w-12 h-px bg-[#c5a059]"></div>
                 <span className="text-[10px] tracking-[0.6em] text-[#c5a059] uppercase font-bold">Category</span>
               </div>
-              <h2 className="text-2xl sm:text-4xl md:text-8xl font-serif-cinematic tracking-tight text-white uppercase font-medium break-words leading-tight">
-                {view.replace('_', ' ')}
-              </h2>
+              <h2 className="text-4xl md:text-8xl font-serif-cinematic tracking-tight text-white uppercase">{view.replace('_', ' ')}</h2>
             </header>
-
-            <div className="space-y-40 md:space-y-64 px-6 md:px-24 max-w-[1600px] mx-auto">
-              {filteredProjects.length > 0 ? (
-                filteredProjects.map((project, idx) => (
-                  <div 
-                    key={project.id} 
-                    onClick={() => handleProjectSelect(project.id)}
-                    className={`group cursor-pointer flex flex-col lg:flex-row items-center gap-12 lg:gap-24 animate-fade-in ${idx % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
-                    style={{ animationDelay: `${idx * 0.1}s` }}
-                  >
-                    <div className="w-full lg:w-1/2 aspect-[3/4] overflow-hidden bg-neutral-900 relative">
-                      <img 
-                        src={project.coverImage} 
-                        alt={project.titleEn} 
-                        className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105 transition-all duration-1000 ease-out"
-                      />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-700"></div>
-                      <div className="absolute top-8 left-8 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-4 group-hover:translate-y-0">
-                         <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full">
-                           <span className="text-[9px] tracking-[0.3em] font-black text-white uppercase">Click to view details</span>
-                         </div>
-                      </div>
-                    </div>
-
-                    <div className="w-full lg:w-1/2 flex flex-col space-y-8">
-                       <div className="space-y-4">
-                         <div className="text-[11px] md:text-xs font-black text-[#c5a059] tracking-[0.4em] uppercase">
-                           {project.year}
-                         </div>
-                         <h3 className="text-3xl md:text-5xl xl:text-6xl font-serif-cinematic font-medium tracking-tight text-white leading-tight">
-                           {project.titleKr} <span className="font-light opacity-60 text-2xl md:text-4xl">({project.titleEn})</span>
-                         </h3>
-                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs tracking-widest text-[#c5a059] font-bold uppercase py-2">
-                           <span>{project.genre}</span>
-                           <span className="text-neutral-800">|</span>
-                           <span>{project.runtime}</span>
-                           <span className="text-neutral-800">|</span>
-                           <span>{project.role.split(',')[0]}</span>
-                         </div>
-                       </div>
-
-                       <div className="max-w-lg">
-                         <p className="text-neutral-500 text-sm md:text-base leading-[1.8] font-light tracking-wide line-clamp-3 group-hover:text-neutral-400 transition-colors whitespace-pre-line">
-                           {project.synopsis}
-                         </p>
-                       </div>
-
-                       {project.awards.length > 0 && (
-                         <div className="pt-6 space-y-4">
-                           {project.awards.slice(0, 3).map((award, aidx) => (
-                             <div key={aidx} className="flex items-start gap-3 group/award">
-                               <span className="text-xs text-[#d97706] mt-0.5 opacity-80 group-hover/award:opacity-100">🏆</span>
-                               <span className="text-[11px] md:text-xs text-[#d97706] opacity-70 group-hover/award:opacity-100 transition-opacity tracking-wide">
-                                 {award}
-                               </span>
-                             </div>
-                           ))}
-                         </div>
-                       )}
-                       
-                       <div className="pt-10 flex items-center gap-4 text-[9px] tracking-[0.5em] text-neutral-700 uppercase font-black group-hover:text-[#c5a059] transition-colors">
-                         <span>More Information</span>
-                         <svg className="w-4 h-4 translate-y-[1px] transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                         </svg>
-                       </div>
-                    </div>
+            <div className="space-y-40 px-6 md:px-24 max-w-[1600px] mx-auto">
+              {filteredProjects.map((project, idx) => (
+                <div key={project.id} onClick={() => handleProjectSelect(project.id)} className={`group cursor-pointer flex flex-col lg:flex-row items-center gap-12 lg:gap-24 animate-fade-in ${idx % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}>
+                  <div className="w-full lg:w-1/2 aspect-[3/4] overflow-hidden bg-neutral-900 relative">
+                    <img src={project.coverImage} className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105 transition-all duration-1000" />
+                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
                   </div>
-                ))
-              ) : (
-                <div className="h-[40vh] flex flex-col items-center justify-center gap-8">
-                  <div className="w-px h-24 bg-neutral-900"></div>
-                  <div className="text-neutral-600 font-light tracking-[0.5em] text-[10px] uppercase">
-                    Works are being updated for selection
+                  <div className="w-full lg:w-1/2 space-y-8">
+                    <div className="space-y-4">
+                      <div className="text-xs font-bold text-[#c5a059] tracking-widest uppercase">{project.year}</div>
+                      <h3 className="text-3xl md:text-6xl font-serif-cinematic font-medium text-white leading-tight">
+                        {project.titleKr} 
+                        {project.titleEn && <span className="block text-xl md:text-3xl text-neutral-600 font-light mt-2 italic">{project.titleEn}</span>}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-6">
+                      <p className="text-neutral-500 text-sm md:text-base leading-relaxed line-clamp-3 whitespace-pre-line font-light tracking-wide">
+                        {project.synopsis}
+                      </p>
+
+                      {/* 추가된 수상 정보 섹션 */}
+                      {project.awards && project.awards.length > 0 && (
+                        <div className="pt-4 border-t border-neutral-900 space-y-3">
+                          <div className="text-[10px] tracking-[0.4em] text-neutral-700 uppercase font-black mb-2">Selected Honors</div>
+                          <div className="space-y-2">
+                            {project.awards.slice(0, 3).map((award, aidx) => (
+                              <div key={aidx} className="flex items-start gap-3 group/award">
+                                <span className="text-[10px] text-[#c5a059] mt-0.5">🏆</span>
+                                <span className="text-[11px] md:text-xs text-neutral-400 tracking-wide group-hover/award:text-white transition-colors">{award}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-4 flex items-center gap-4 text-[9px] tracking-[0.5em] text-neutral-700 uppercase font-black group-hover:text-[#c5a059] transition-colors">
+                      <span>View Project Detail</span>
+                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </div>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
-            
-            <footer className="mt-40 md:mt-64 h-60 flex flex-col items-center justify-center text-neutral-900 border-t border-neutral-900/30">
-              <div className="w-px h-16 bg-neutral-900 mb-6"></div>
-              <div className="text-[9px] tracking-[0.5em] uppercase">Cinematic Archive End</div>
-            </footer>
           </div>
         );
     }
@@ -358,9 +235,7 @@ const App: React.FC = () => {
   return (
     <div className="relative min-h-screen bg-[#050505]">
       <Navbar currentView={view} onNavigate={handleNavbarNavigate} />
-      <main>
-        {renderContent()}
-      </main>
+      <main>{renderContent()}</main>
     </div>
   );
 };

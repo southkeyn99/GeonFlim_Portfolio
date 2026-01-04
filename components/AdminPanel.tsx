@@ -116,9 +116,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
 
     setIsMoving(true);
     
+    // Swap the projects by re-emitting updates or using a proper sorting field
+    // In this simplified version, we'll swap their IDs or order to simulate repositioning
     const p1 = filteredProjects[indexInFiltered];
     const p2 = filteredProjects[targetIndex];
 
+    // Note: To truly reorder in local storage, you'd want an 'order' property.
+    // Here we swap data to simulate UI reordering.
     const p1Update = { ...p2, id: p1.id };
     const p2Update = { ...p1, id: p2.id };
 
@@ -136,33 +140,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
     ? projects 
     : projects.filter(p => p.category === libraryFilter);
 
-  // Helper for Exporting Production Code
-  const generateProductionCode = () => {
-    const fullData = {
-      projects,
-      settings
-    };
-    const jsonString = JSON.stringify(fullData, null, 2);
-    return jsonString;
-  };
-
-  const generateShareLink = () => {
-    const fullData = {
-      projects,
-      settings
-    };
-    const encodedData = btoa(encodeURIComponent(JSON.stringify(fullData)));
-    const shareUrl = `${window.location.origin}${window.location.pathname}#sync=${encodedData}`;
-    navigator.clipboard.writeText(shareUrl);
-    alert('Share link copied! Open this link on any device to sync your changes.');
-  };
-
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
+      {/* Background Mask */}
       <div className="fixed top-0 left-0 w-full h-40 bg-[#0a0a0a] z-40"></div>
       
       <div className="relative z-50 pt-48 px-6 md:px-10 pb-32">
         <div className="max-w-7xl mx-auto">
+          {/* Main Navigation Tabs */}
           <div className="flex gap-12 mb-16 border-b border-neutral-800">
             <button 
               onClick={() => setActiveTab('WORKS')}
@@ -180,13 +165,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
               onClick={() => setActiveTab('DATABASE')}
               className={`pb-4 px-2 text-[10px] tracking-[0.4em] uppercase transition-all font-medium ${activeTab === 'DATABASE' ? 'text-[#c5a059] border-b-2 border-[#c5a059]' : 'text-neutral-500 hover:text-white'}`}
             >
-              Database & Sync
+              Database & Deploy
             </button>
           </div>
 
           {activeTab === 'WORKS' && (
             <div className="flex flex-col xl:flex-row gap-16 animate-fade-in">
-              {/* Work Form */}
+              {/* Left Column: Form */}
               <div className="w-full xl:w-[60%] bg-[#111] p-8 md:p-12 border border-neutral-800 rounded-sm">
                 <header className="flex justify-between items-baseline mb-12">
                   <h2 className="text-2xl font-serif-cinematic uppercase tracking-[0.2em]">{editingId ? 'Update Film' : 'New Entry'}</h2>
@@ -250,6 +235,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
                   </div>
 
+                  {/* Media Upload Section */}
                   <div className="pt-8 border-t border-neutral-800 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                       <div className="space-y-4">
@@ -300,6 +286,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
                   </div>
 
+                  {/* Awards Section */}
                   <div className="pt-8 border-t border-neutral-800 space-y-6">
                     <label className="text-[10px] uppercase tracking-widest text-neutral-500 block">Awards & Screenings</label>
                     <div className="flex gap-2">
@@ -323,6 +310,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </ul>
                   </div>
 
+                  {/* Submit Button */}
                   <div className="flex gap-4 pt-12">
                     <button type="submit" className="flex-1 bg-[#c5a059] text-black py-5 font-bold hover:bg-[#d4b47a] transition-all uppercase tracking-[0.4em] text-[10px] shadow-lg shadow-black/40">
                       {editingId ? 'Update Publication' : 'Release to Portfolio'}
@@ -336,7 +324,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                 </form>
               </div>
 
-              {/* Work Library */}
+              {/* Right Column: Library */}
               <div className="w-full xl:w-[40%]">
                 <header className="mb-8 space-y-4">
                   <div className="flex justify-between items-end">
@@ -346,6 +334,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
                   </div>
                   
+                  {/* Category Filter Tabs */}
                   <div className="flex flex-wrap gap-2">
                     {['ALL', 'DIRECTING', 'AI_FILM', 'CINEMATOGRAPHY', 'STAFF', 'OTHER'].map(cat => (
                       <button 
@@ -362,6 +351,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                 <div className={`space-y-4 max-h-[1200px] overflow-y-auto pr-4 custom-scroll transition-opacity ${isMoving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                   {currentLibraryList.map((p, idx) => (
                     <div key={p.id} className="group flex gap-6 items-center bg-[#111] border border-neutral-800 p-5 hover:border-[#c5a059]/50 transition-all">
+                      {/* Order Controls */}
                       <div className="flex flex-col gap-2 items-center text-neutral-700">
                         <button 
                           type="button"
@@ -382,17 +372,34 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                         </button>
                       </div>
 
+                      {/* Thumbnail */}
                       <div className="w-16 h-20 bg-[#050505] border border-neutral-800 overflow-hidden flex-shrink-0">
                         <img src={p.coverImage} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={p.titleKr} />
                       </div>
+
+                      {/* Info */}
                       <div className="flex-1 min-w-0">
                         <div className="text-[8px] text-[#c5a059] tracking-widest uppercase mb-1 font-bold">{p.category.replace('_', ' ')} &bull; {p.year}</div>
                         <div className="font-serif-cinematic text-sm truncate">{p.titleKr}</div>
                         <div className="text-[9px] text-neutral-600 uppercase tracking-widest truncate">{p.titleEn}</div>
                       </div>
+
+                      {/* Actions */}
                       <div className="flex flex-col items-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
-                        <button type="button" onClick={() => { setEditingId(p.id); setFormData(p); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="text-[10px] uppercase text-neutral-400 hover:text-white underline underline-offset-4 font-bold">Edit</button>
-                        <button type="button" onClick={() => onDelete(p.id)} className="text-[10px] uppercase text-red-900 hover:text-red-500 font-bold">Delete</button>
+                        <button 
+                          type="button" 
+                          onClick={() => { setEditingId(p.id); setFormData(p); window.scrollTo({top: 0, behavior: 'smooth'}); }} 
+                          className="text-[10px] uppercase text-neutral-400 hover:text-white underline underline-offset-4 font-bold"
+                        >
+                          Edit
+                        </button>
+                        <button 
+                          type="button" 
+                          onClick={() => onDelete(p.id)} 
+                          className="text-[10px] uppercase text-red-900 hover:text-red-500 font-bold"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -403,6 +410,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
 
           {activeTab === 'SETTINGS' && (
             <div className="max-w-3xl animate-fade-in mx-auto">
+              {/* Site settings form matches the same aesthetic */}
               <header className="mb-12">
                 <h2 className="text-2xl font-serif-cinematic mb-2 uppercase tracking-[0.2em]">Profile & Identity</h2>
                 <p className="text-[10px] tracking-[0.4em] text-neutral-600 uppercase">Manage global site appearance</p>
@@ -456,55 +464,26 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
           )}
 
           {activeTab === 'DATABASE' && (
-            <div className="max-w-4xl animate-fade-in mx-auto space-y-16">
-              <header className="mb-12">
-                <h2 className="text-2xl font-serif-cinematic mb-2 uppercase tracking-[0.2em]">Global Synchronization</h2>
-                <p className="text-[10px] tracking-[0.4em] text-neutral-600 uppercase">Solve device-sync and permanent persistence</p>
-              </header>
-
-              {/* Share Link Strategy */}
-              <div className="bg-[#111] p-10 border border-neutral-800 space-y-6">
-                <h3 className="text-sm tracking-[0.2em] font-bold text-[#c5a059] uppercase">Option 1: Device-to-Device Sync</h3>
-                <p className="text-xs text-neutral-500 leading-relaxed">
-                  IndexedDB는 브라우저 전용 로컬 저장소입니다. 아래 버튼을 눌러 생성된 "공유 링크"를 카카오톡이나 메일로 보내 다른 기기(스마트폰 등)에서 여세요. 
-                  해당 기기에도 당신의 수정 사항이 즉시 복제됩니다.
-                </p>
-                <button 
-                  onClick={generateShareLink}
-                  className="bg-white text-black px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-[#c5a059] transition-colors"
-                >
-                  Generate & Copy Share Link
-                </button>
-              </div>
-
-              {/* Permanent Persistence Strategy */}
-              <div className="bg-[#111] p-10 border border-neutral-800 space-y-8">
+            <div className="max-w-4xl animate-fade-in mx-auto">
+              <div className="bg-[#111] p-12 border border-neutral-800 space-y-8">
                 <div className="space-y-4">
-                  <h3 className="text-sm tracking-[0.2em] font-bold text-[#c5a059] uppercase">Option 2: Permanent Build Reflection</h3>
+                  <h2 className="text-xl font-serif-cinematic uppercase tracking-[0.2em]">Cloud Sync & Deployment</h2>
                   <p className="text-xs text-neutral-500 leading-relaxed">
-                    모든 방문자가 수정한 내용을 보게 하려면 이 데이터를 <b>저(AI)에게 주고 constants.ts 파일을 업데이트</b>하라고 요청해야 합니다. 
-                    아래 텍스트 박스의 내용을 모두 복사하여 저에게 붙여넣어 주세요.
+                    To make your changes permanent for all visitors, copy the generated data code below and provide it to the AI for a source-code update.
                   </p>
                 </div>
-                
                 <div className="relative">
                    <textarea 
-                    readOnly
-                    value={generateProductionCode()}
-                    className="w-full h-80 bg-[#050505] border border-neutral-800 p-6 text-[10px] font-mono text-neutral-400 overflow-y-auto"
-                   />
+                    readOnly 
+                    value={JSON.stringify({ projects, settings }, null, 2)} 
+                    className="w-full h-80 bg-[#050505] border border-neutral-800 p-6 text-[10px] font-mono text-neutral-400" 
+                  />
                    <button 
-                    onClick={() => { navigator.clipboard.writeText(generateProductionCode()); alert('Copied to clipboard!'); }}
+                    onClick={() => { navigator.clipboard.writeText(JSON.stringify({ projects, settings }, null, 2)); alert('Copied to clipboard!'); }}
                     className="absolute top-4 right-4 bg-neutral-800 px-4 py-2 text-[9px] uppercase tracking-widest font-bold border border-neutral-700 hover:bg-white hover:text-black transition-all"
                    >
-                     Copy Data JSON
+                     Copy Data Code
                    </button>
-                </div>
-                
-                <div className="p-4 border-l-2 border-[#c5a059] bg-[#1a1a1a]">
-                  <p className="text-[10px] text-neutral-400 leading-relaxed italic">
-                    "이 데이터를 줄테니 내 포트폴리오의 constants.ts 파일을 이 최신 정보들로 완전히 업데이트해줘." 라고 저에게 명령하세요.
-                  </p>
                 </div>
               </div>
             </div>
