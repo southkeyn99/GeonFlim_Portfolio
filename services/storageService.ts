@@ -2,117 +2,62 @@
 import { Project, SiteSettings } from '../types.ts';
 import { INITIAL_PROJECTS, DEFAULT_SETTINGS } from '../constants.ts';
 
-const DB_NAME = 'CinematicPortfolioDB';
-const DB_VERSION = 1;
-const STORES = {
-  PROJECTS: 'projects',
-  SETTINGS: 'settings'
+const STORAGE_KEYS = {
+  PROJECTS: 'cinematic_portfolio_projects_v2',
+  SETTINGS: 'cinematic_portfolio_settings_v2',
+  INITIALIZED: 'cinematic_portfolio_initialized'
 };
 
 class StorageService {
-  private db: IDBDatabase | null = null;
+  constructor() {
+    this.init();
+  }
 
-  private async getDB(): Promise<IDBDatabase> {
-    if (this.db) return this.db;
-
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(STORES.PROJECTS)) {
-          db.createObjectStore(STORES.PROJECTS, { keyPath: 'id' });
-        }
-        if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
-          db.createObjectStore(STORES.SETTINGS);
-        }
-      };
-
-      request.onsuccess = (event) => {
-        this.db = (event.target as IDBOpenDBRequest).result;
-        resolve(this.db);
-      };
-
-      request.onerror = (event) => reject((event.target as IDBOpenDBRequest).error);
-    });
+  private init() {
+    // 최초 실행 시에만 초기 데이터를 로컬 스토리지에 저장
+    const isInitialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
+    if (!isInitialized) {
+      localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
+      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+      localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+    }
   }
 
   async getProjects(): Promise<Project[]> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORES.PROJECTS, 'readonly');
-      const store = transaction.objectStore(STORES.PROJECTS);
-      const request = store.getAll();
+    const data = localStorage.getItem(STORAGE_KEYS.PROJECTS);
+    return data ? JSON.parse(data) : INITIAL_PROJECTS;
+  }
 
-      request.onsuccess = async () => {
-        const results = request.result;
-        if (results.length === 0) {
-          for (const p of INITIAL_PROJECTS) {
-            await this.addProject(p);
-          }
-          resolve(INITIAL_PROJECTS);
-        } else {
-          resolve(results);
-        }
-      };
-      request.onerror = () => reject(request.error);
-    });
+  async saveProjects(projects: Project[]): Promise<void> {
+    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(projects));
   }
 
   async addProject(project: Project): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORES.PROJECTS, 'readwrite');
-      const store = transaction.objectStore(STORES.PROJECTS);
-      const request = store.put(project);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    const projects = await this.getProjects();
+    // 새 프로젝트를 목록 맨 앞에 추가
+    const updated = [project, ...projects];
+    await this.saveProjects(updated);
   }
 
   async updateProject(project: Project): Promise<void> {
-    return this.addProject(project);
+    const projects = await this.getProjects();
+    const updated = projects.map(p => p.id === project.id ? project : p);
+    await this.saveProjects(updated);
   }
 
   async deleteProject(id: string): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORES.PROJECTS, 'readwrite');
-      const store = transaction.objectStore(STORES.PROJECTS);
-      const request = store.delete(id);
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    const projects = await this.getProjects();
+    const updated = projects.filter(p => p.id !== id);
+    await this.saveProjects(updated);
   }
 
   async getSettings(): Promise<SiteSettings> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORES.SETTINGS, 'readonly');
-      const store = transaction.objectStore(STORES.SETTINGS);
-      const request = store.get('site_config');
-
-      request.onsuccess = () => {
-        if (!request.result) {
-          this.saveSettings(DEFAULT_SETTINGS);
-          resolve(DEFAULT_SETTINGS);
-        } else {
-          resolve(request.result);
-        }
-      };
-      request.onerror = () => reject(request.error);
-    });
+    const data = localStorage.getItem(STORAGE_KEYS.SETTINGS);
+    return data ? JSON.parse(data) : DEFAULT_SETTINGS;
   }
 
   async saveSettings(settings: SiteSettings): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORES.SETTINGS, 'readwrite');
-      const store = transaction.objectStore(STORES.SETTINGS);
-      const request = store.put(settings, 'site_config');
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
   }
 }
 

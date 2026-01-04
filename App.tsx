@@ -21,26 +21,27 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passwordInput, setPasswordInput] = useState('');
-  const [authError, setAuthError] = useState(false);
 
   const lastViewRef = useRef<ViewState>(view);
 
+  const loadData = async () => {
+    try {
+      const [loadedProjects, loadedSettings] = await Promise.all([
+        storageService.getProjects(),
+        storageService.getSettings()
+      ]);
+      // 항상 최신 순서를 보장하기 위해 저장된 순서 그대로 사용
+      setProjects(loadedProjects);
+      setSettings(loadedSettings);
+    } catch (error) {
+      console.error("Data Load Error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const initData = async () => {
-      try {
-        const [loadedProjects, loadedSettings] = await Promise.all([
-          storageService.getProjects(),
-          storageService.getSettings()
-        ]);
-        setProjects(loadedProjects);
-        setSettings(loadedSettings);
-      } catch (error) {
-        console.error("Data Load Error:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    initData();
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -57,28 +58,23 @@ const App: React.FC = () => {
       window.scrollTo({ top: 0, behavior: 'auto' });
       lastViewRef.current = view;
     }
-
-    setAuthError(false);
     setPasswordInput('');
   }, [view, isReturning, scrollPos]);
 
   const handleAddProject = async (p: Project) => {
     await storageService.addProject(p);
-    const updated = await storageService.getProjects();
-    setProjects(updated);
+    await loadData(); // 저장 후 즉시 최신 데이터 로드
   };
 
   const handleUpdateProject = async (p: Project) => {
     await storageService.updateProject(p);
-    const updated = await storageService.getProjects();
-    setProjects(updated);
+    await loadData(); // 저장 후 즉시 최신 데이터 로드
   };
 
   const handleDeleteProject = async (id: string) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       await storageService.deleteProject(id);
-      const updated = await storageService.getProjects();
-      setProjects(updated);
+      await loadData();
     }
   };
 
@@ -91,10 +87,8 @@ const App: React.FC = () => {
     e.preventDefault();
     if (passwordInput === '1228') {
       setIsAuthenticated(true);
-      setAuthError(false);
     } else {
-      setAuthError(true);
-      setPasswordInput('');
+      alert('Invalid Passcode');
     }
   };
 
@@ -126,7 +120,7 @@ const App: React.FC = () => {
     return projects.find(p => p.id === selectedProjectId);
   }, [projects, view, selectedProjectId]);
 
-  if (isLoading) return <div className="h-screen bg-black flex items-center justify-center text-[10px] tracking-widest text-neutral-500 uppercase">Loading Cinematic Archive...</div>;
+  if (isLoading) return <div className="h-screen bg-black flex items-center justify-center text-[10px] tracking-widest text-neutral-500 uppercase">Synchronizing Archive...</div>;
 
   const renderContent = () => {
     switch (view) {
@@ -141,7 +135,7 @@ const App: React.FC = () => {
       case 'PROJECT_DETAIL':
         return currentProject ? (
           <div className="relative">
-            <button onClick={handleBack} className="fixed top-28 left-6 md:left-20 z-40 bg-black/50 backdrop-blur-md px-6 py-3 border border-white/10 text-[10px] tracking-widest uppercase hover:text-[#c5a059] transition-colors">Go Back</button>
+            <button onClick={handleBack} className="fixed top-28 left-6 md:left-20 z-[45] bg-black/50 backdrop-blur-md px-6 py-3 border border-white/10 text-[10px] tracking-widest uppercase hover:text-[#c5a059] transition-colors">Go Back</button>
             <ProjectDetail project={currentProject} />
           </div>
         ) : null;
@@ -201,7 +195,6 @@ const App: React.FC = () => {
                         {project.synopsis}
                       </p>
 
-                      {/* 추가된 수상 정보 섹션 */}
                       {project.awards && project.awards.length > 0 && (
                         <div className="pt-4 border-t border-neutral-900 space-y-3">
                           <div className="text-[10px] tracking-[0.4em] text-neutral-700 uppercase font-black mb-2">Selected Honors</div>
