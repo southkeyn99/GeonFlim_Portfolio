@@ -242,7 +242,7 @@ const App: React.FC = () => {
                 <div className="w-12 h-px bg-[#c5a059]"></div>
                 <span className="text-[10px] tracking-[0.6em] text-[#c5a059] uppercase font-bold">Category</span>
               </div>
-              <h2 className="text-5xl md:text-8xl font-serif-cinematic tracking-tighter text-white uppercase font-bold">
+              <h2 className="text-2xl sm:text-4xl md:text-8xl font-serif-cinematic tracking-tight text-white uppercase font-medium break-words leading-tight">
                 {view.replace('_', ' ')}
               </h2>
             </header>
