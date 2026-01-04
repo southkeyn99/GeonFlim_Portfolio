@@ -204,8 +204,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                         <input type="text" value={formData.titleKr} onChange={e => setFormData({...formData, titleKr: e.target.value})} className="w-full bg-[#1a1a1a] border border-neutral-800 p-3 text-sm" required />
                       </div>
                       <div className="space-y-2">
-                        <label className="text-[10px] uppercase tracking-widest text-neutral-500 block">Title (EN)</label>
-                        <input type="text" value={formData.titleEn} onChange={e => setFormData({...formData, titleEn: e.target.value})} className="w-full bg-[#1a1a1a] border border-neutral-800 p-3 text-sm" required />
+                        <label className="text-[10px] uppercase tracking-widest text-neutral-500 block">Title (EN) - Optional</label>
+                        <input type="text" value={formData.titleEn} onChange={e => setFormData({...formData, titleEn: e.target.value})} className="w-full bg-[#1a1a1a] border border-neutral-800 p-3 text-sm" />
                       </div>
                     </div>
 
@@ -216,8 +216,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-[10px] uppercase tracking-widest text-neutral-500 block">Synopsis</label>
-                      <textarea value={formData.synopsis} onChange={e => setFormData({...formData, synopsis: e.target.value})} className="w-full bg-[#1a1a1a] border border-neutral-800 p-4 text-sm h-32 resize-none leading-relaxed" />
+                      <label className="text-[10px] uppercase tracking-widest text-neutral-500 block">Synopsis (Supports line breaks)</label>
+                      <textarea 
+                        value={formData.synopsis} 
+                        onChange={e => setFormData({...formData, synopsis: e.target.value})} 
+                        className="w-full bg-[#1a1a1a] border border-neutral-800 p-4 text-sm h-32 resize-none leading-relaxed" 
+                        placeholder="Enter film description... Use Enter for line breaks."
+                      />
                     </div>
                   </div>
 

@@ -290,7 +290,7 @@ const App: React.FC = () => {
                        </div>
 
                        <div className="max-w-lg">
-                         <p className="text-neutral-500 text-sm md:text-base leading-[1.8] font-light tracking-wide line-clamp-3 group-hover:text-neutral-400 transition-colors">
+                         <p className="text-neutral-500 text-sm md:text-base leading-[1.8] font-light tracking-wide line-clamp-3 group-hover:text-neutral-400 transition-colors whitespace-pre-line">
                            {project.synopsis}
                          </p>
                        </div>
