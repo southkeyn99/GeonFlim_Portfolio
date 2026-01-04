@@ -52,7 +52,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
         else if (target === 'profile') setSiteSettingsForm(prev => ({ ...prev, profileImage: base64 }));
         else if (target === 'homeBg') setSiteSettingsForm(prev => ({ ...prev, homeBgImage: base64 }));
       } else if (target === 'stills') {
-        // Fix: Explicitly cast 'f' to 'File' to resolve 'unknown' type error in TypeScript map function
         const promises = Array.from(files).map((f: File) => fileToBase64(f));
         const base64s = await Promise.all(promises);
         setFormData(prev => ({ ...prev, stillCuts: [...(prev.stillCuts || []), ...base64s] }));
@@ -102,14 +101,28 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
     });
   };
 
+  // Function to reorder projects by swapping content but keeping the ID index
+  const handleMove = (index: number, direction: 'UP' | 'DOWN') => {
+    const newIndex = direction === 'UP' ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= projects.length) return;
+
+    const p1 = projects[index];
+    const p2 = projects[newIndex];
+
+    // Swap data content between the two fixed ID slots
+    const p1Update = { ...p2, id: p1.id };
+    const p2Update = { ...p1, id: p2.id };
+
+    onUpdate(p1Update);
+    onUpdate(p2Update);
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
-      {/* Header with solid background to prevent Navbar overlap */}
       <div className="fixed top-0 left-0 w-full h-40 bg-[#0a0a0a] z-40"></div>
       
       <div className="relative z-50 pt-48 px-6 md:px-10 pb-32">
         <div className="max-w-7xl mx-auto">
-          {/* Tab Navigation */}
           <div className="flex gap-12 mb-16 border-b border-neutral-800">
             <button 
               onClick={() => setActiveTab('WORKS')}
@@ -135,7 +148,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                 </header>
                 
                 <form onSubmit={handleSubmit} className="space-y-12">
-                  {/* Basic Info Group */}
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -186,10 +198,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
                   </div>
 
-                  {/* Media Group */}
                   <div className="pt-8 border-t border-neutral-800 space-y-10">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                      {/* Main Image */}
                       <div className="space-y-4">
                         <label className="text-[10px] uppercase tracking-[0.3em] text-[#c5a059] font-bold block">1. Main Cover Image</label>
                         <p className="text-[9px] text-neutral-500 uppercase">Single high-res image for thumbnails and headers.</p>
@@ -211,7 +221,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                         </div>
                       </div>
 
-                      {/* Still Cuts */}
                       <div className="space-y-4">
                         <label className="text-[10px] uppercase tracking-[0.3em] text-[#c5a059] font-bold block">2. Still Cuts (Multiple)</label>
                         <p className="text-[9px] text-neutral-500 uppercase">Select multiple images for the gallery view.</p>
@@ -239,7 +248,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
                   </div>
 
-                  {/* Recognition Group */}
                   <div className="pt-8 border-t border-neutral-800 space-y-6">
                     <label className="text-[10px] uppercase tracking-widest text-neutral-500 block">Awards & Screenings</label>
                     <div className="flex gap-2">
@@ -263,7 +271,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </ul>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex gap-4 pt-12">
                     <button type="submit" className="flex-1 bg-[#c5a059] text-black py-5 font-bold hover:bg-[#d4b47a] transition-all uppercase tracking-[0.4em] text-[10px] shadow-lg shadow-black/40">
                       {editingId ? 'Update Publication' : 'Release to Portfolio'}
@@ -284,8 +291,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                   <p className="text-[9px] tracking-widest text-neutral-600 uppercase">Existing Works: {projects.length}</p>
                 </header>
                 <div className="space-y-4 max-h-[1200px] overflow-y-auto pr-4 custom-scroll">
-                  {projects.map(p => (
+                  {projects.map((p, idx) => (
                     <div key={p.id} className="group flex gap-6 items-center bg-[#111] border border-neutral-800 p-5 hover:border-[#c5a059]/50 transition-all">
+                      {/* Reorder Controls */}
+                      <div className="flex flex-col gap-2 items-center text-neutral-700">
+                        <button 
+                          onClick={() => handleMove(idx, 'UP')}
+                          disabled={idx === 0}
+                          className="hover:text-[#c5a059] disabled:opacity-0 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                        </button>
+                        <span className="text-[8px] font-bold opacity-30">{idx + 1}</span>
+                        <button 
+                          onClick={() => handleMove(idx, 'DOWN')}
+                          disabled={idx === projects.length - 1}
+                          className="hover:text-[#c5a059] disabled:opacity-0 transition-colors"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                      </div>
+
                       <div className="w-16 h-20 bg-[#050505] border border-neutral-800 overflow-hidden flex-shrink-0">
                         <img src={p.coverImage} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
                       </div>
@@ -294,7 +320,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                         <div className="font-serif-cinematic text-sm truncate">{p.titleKr}</div>
                         <div className="text-[9px] text-neutral-600 uppercase tracking-widest truncate">{p.titleEn}</div>
                       </div>
-                      <div className="flex gap-4 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <div className="flex flex-col items-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
                         <button onClick={() => { setEditingId(p.id); setFormData(p); }} className="text-[10px] uppercase text-neutral-400 hover:text-white underline underline-offset-4">Edit</button>
                         <button onClick={() => onDelete(p.id)} className="text-[10px] uppercase text-red-900 hover:text-red-500">Delete</button>
                       </div>
