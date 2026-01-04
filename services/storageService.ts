@@ -2,14 +2,10 @@
 import { Project, SiteSettings } from '../types.ts';
 import { INITIAL_PROJECTS, DEFAULT_SETTINGS } from '../constants.ts';
 
-/**
- * [배포 및 업로드 해결책] 
- * 버전을 v7로 변경하여 이미지 업로드 기능이 포함된 데이터를 관리합니다.
- */
 const STORAGE_KEYS = {
-  PROJECTS: 'cinematic_archive_projects_v7',
-  SETTINGS: 'cinematic_archive_settings_v7',
-  INITIALIZED: 'cinematic_archive_init_v7'
+  PROJECTS: 'cinematic_archive_projects_v8',
+  SETTINGS: 'cinematic_archive_settings_v8',
+  INITIALIZED: 'cinematic_archive_init_v8'
 };
 
 class StorageService {
@@ -20,10 +16,15 @@ class StorageService {
   private ensureInitialized() {
     const isInitialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!isInitialized) {
-      localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
-      localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
-      localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+      this.resetToDefaults();
     }
+  }
+
+  resetToDefaults() {
+    localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
+    localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
+    localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
+    window.location.reload(); // 데이터 초기화 후 리로드
   }
 
   async getProjects(): Promise<Project[]> {
@@ -71,6 +72,14 @@ class StorageService {
 
   async saveSettings(settings: SiteSettings): Promise<void> {
     localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(settings));
+  }
+
+  // 전체 상태를 텍스트로 내보내기 위한 헬퍼
+  async getRawState() {
+    return {
+      projects: await this.getProjects(),
+      settings: await this.getSettings()
+    };
   }
 }
 
