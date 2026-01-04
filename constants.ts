@@ -7,17 +7,23 @@ export const INITIAL_PROJECTS: Project[] = [
     category: 'DIRECTING',
     year: '2025',
     titleKr: '아부지',
-    titleEn: 'Abuji',
-    genre: 'Drama',
-    runtime: '24min',
+    titleEn: 'Panic Disorder',
+    genre: 'Drama, Thriller',
+    runtime: '27min 20sec',
     role: 'Director, Writer',
-    synopsis: '24년 명필름 단편스쿨 수료작. 아버지와의 화해를 다룬 정통 드라마.',
+    synopsis: '어릴적 아버지의 폭력으로 집을 나온 이후, 공황장애를 얻게 된 현수.\n20년만에 누나의 부탁으로 치매에 걸린 아버지를 돌보게 된다.',
     awards: [
       '제 4회 경기도예술영화제 대상',
+      '24년 명필름 단편스쿨 수료작',
       '제 3회 UFO 영화제 초청상영'
     ],
     coverImage: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=1200',
-    stillCuts: []
+    stillCuts: [
+      'https://images.unsplash.com/photo-1485846234645-a62644f84728?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1478720568477-152d9b164e26?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1535016120720-40c646be8958?auto=format&fit=crop&q=80&w=1200',
+      'https://images.unsplash.com/photo-1512149177596-f817c7ef5d4c?auto=format&fit=crop&q=80&w=1200'
+    ]
   }
 ];
 
