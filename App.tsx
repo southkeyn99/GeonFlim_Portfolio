@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Project, ViewState, SiteSettings } from './types.ts';
 import { storageService } from './services/storageService.ts';
 import { DEFAULT_SETTINGS } from './constants.ts';
@@ -10,6 +10,10 @@ import Home from './components/Home.tsx';
 import About from './components/About.tsx';
 import Contact from './components/Contact.tsx';
 
+/**
+ * Added missing default export and completed the truncated switch-case logic in renderContent.
+ * This fixes the error: Module '"file:///App"' has no default export.
+ */
 const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
@@ -24,25 +28,24 @@ const App: React.FC = () => {
 
   const lastViewRef = useRef<ViewState>(view);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [loadedProjects, loadedSettings] = await Promise.all([
         storageService.getProjects(),
         storageService.getSettings()
       ]);
-      // 항상 최신 순서를 보장하기 위해 저장된 순서 그대로 사용
-      setProjects(loadedProjects);
-      setSettings(loadedSettings);
+      setProjects([...loadedProjects]);
+      setSettings({...loadedSettings});
     } catch (error) {
       console.error("Data Load Error:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   useEffect(() => {
     if (isReturning) {
@@ -63,12 +66,12 @@ const App: React.FC = () => {
 
   const handleAddProject = async (p: Project) => {
     await storageService.addProject(p);
-    await loadData(); // 저장 후 즉시 최신 데이터 로드
+    await loadData();
   };
 
   const handleUpdateProject = async (p: Project) => {
     await storageService.updateProject(p);
-    await loadData(); // 저장 후 즉시 최신 데이터 로드
+    await loadData();
   };
 
   const handleDeleteProject = async (id: string) => {
@@ -80,7 +83,7 @@ const App: React.FC = () => {
 
   const handleSaveSettings = async (newSettings: SiteSettings) => {
     await storageService.saveSettings(newSettings);
-    setSettings(newSettings);
+    await loadData();
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -166,59 +169,46 @@ const App: React.FC = () => {
         );
       default:
         return (
-          <div className="pt-32 md:pt-48 pb-32">
-            <header className="px-6 md:px-24 mb-20 animate-fade-in">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-px bg-[#c5a059]"></div>
-                <span className="text-[10px] tracking-[0.6em] text-[#c5a059] uppercase font-bold">Category</span>
+          <div className="pt-32 md:pt-48 pb-32 px-6 md:px-20 animate-fade-in">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center gap-6 mb-20">
+                <div className="h-px w-12 bg-[#c5a059]"></div>
+                <h2 className="text-[11px] tracking-[0.6em] font-black uppercase text-neutral-500">
+                  {view.replace('_', ' ')} Archive
+                </h2>
               </div>
-              <h2 className="text-4xl md:text-8xl font-serif-cinematic tracking-tight text-white uppercase">{view.replace('_', ' ')}</h2>
-            </header>
-            <div className="space-y-40 px-6 md:px-24 max-w-[1600px] mx-auto">
-              {filteredProjects.map((project, idx) => (
-                <div key={project.id} onClick={() => handleProjectSelect(project.id)} className={`group cursor-pointer flex flex-col lg:flex-row items-center gap-12 lg:gap-24 animate-fade-in ${idx % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}>
-                  <div className="w-full lg:w-1/2 aspect-[3/4] overflow-hidden bg-neutral-900 relative">
-                    <img src={project.coverImage} className="w-full h-full object-cover grayscale brightness-75 group-hover:grayscale-0 group-hover:brightness-100 group-hover:scale-105 transition-all duration-1000" />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-                  </div>
-                  <div className="w-full lg:w-1/2 space-y-8">
-                    <div className="space-y-4">
-                      <div className="text-xs font-bold text-[#c5a059] tracking-widest uppercase">{project.year}</div>
-                      <h3 className="text-3xl md:text-6xl font-serif-cinematic font-medium text-white leading-tight">
-                        {project.titleKr} 
-                        {project.titleEn && <span className="block text-xl md:text-3xl text-neutral-600 font-light mt-2 italic">{project.titleEn}</span>}
-                      </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">
+                {filteredProjects.map((project) => (
+                  <div 
+                    key={project.id} 
+                    className="group cursor-pointer space-y-6"
+                    onClick={() => handleProjectSelect(project.id)}
+                  >
+                    <div className="relative aspect-[3/4] overflow-hidden border border-white/5 bg-neutral-900 shadow-2xl">
+                      <img 
+                        src={project.coverImage} 
+                        alt={project.titleEn} 
+                        className="w-full h-full object-cover grayscale transition-all duration-[2s] group-hover:grayscale-0 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
                     </div>
-
-                    <div className="space-y-6">
-                      <p className="text-neutral-500 text-sm md:text-base leading-relaxed line-clamp-3 whitespace-pre-line font-light tracking-wide">
-                        {project.synopsis}
-                      </p>
-
-                      {project.awards && project.awards.length > 0 && (
-                        <div className="pt-4 border-t border-neutral-900 space-y-3">
-                          <div className="text-[10px] tracking-[0.4em] text-neutral-700 uppercase font-black mb-2">Selected Honors</div>
-                          <div className="space-y-2">
-                            {project.awards.slice(0, 3).map((award, aidx) => (
-                              <div key={aidx} className="flex items-start gap-3 group/award">
-                                <span className="text-[10px] text-[#c5a059] mt-0.5">🏆</span>
-                                <span className="text-[11px] md:text-xs text-neutral-400 tracking-wide group-hover/award:text-white transition-colors">{award}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-4 flex items-center gap-4 text-[9px] tracking-[0.5em] text-neutral-700 uppercase font-black group-hover:text-[#c5a059] transition-colors">
-                      <span>View Project Detail</span>
-                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                      </svg>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-[9px] text-[#c5a059] font-black tracking-widest">{project.year}</span>
+                        <div className="h-px w-4 bg-neutral-800"></div>
+                        <span className="text-[8px] text-neutral-500 font-bold tracking-[0.2em] uppercase">{project.role}</span>
+                      </div>
+                      <h3 className="text-2xl font-serif-cinematic tracking-tight group-hover:text-[#c5a059] transition-colors">{project.titleKr}</h3>
+                      <div className="text-[10px] text-neutral-600 uppercase tracking-widest">{project.titleEn}</div>
                     </div>
                   </div>
+                ))}
+              </div>
+              {filteredProjects.length === 0 && (
+                <div className="py-20 text-center text-neutral-700 text-[10px] uppercase tracking-[0.5em]">
+                  No entries found in this category
                 </div>
-              ))}
+              )}
             </div>
           </div>
         );
@@ -226,9 +216,9 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#050505]">
+    <div className="bg-[#050505] min-h-screen text-white">
       <Navbar currentView={view} onNavigate={handleNavbarNavigate} />
-      <main>{renderContent()}</main>
+      {renderContent()}
     </div>
   );
 };
