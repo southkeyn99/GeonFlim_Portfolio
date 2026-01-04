@@ -277,7 +277,7 @@ const App: React.FC = () => {
                          <div className="text-[11px] md:text-xs font-black text-[#c5a059] tracking-[0.4em] uppercase">
                            {project.year}
                          </div>
-                         <h3 className="text-3xl md:text-5xl xl:text-6xl font-serif-cinematic font-bold tracking-tight text-white leading-tight">
+                         <h3 className="text-3xl md:text-5xl xl:text-6xl font-serif-cinematic font-medium tracking-tight text-white leading-tight">
                            {project.titleKr} <span className="font-light opacity-60 text-2xl md:text-4xl">({project.titleEn})</span>
                          </h3>
                          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[10px] md:text-xs tracking-widest text-[#c5a059] font-bold uppercase py-2">

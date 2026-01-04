@@ -63,8 +63,8 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
       <section className="min-h-screen bg-[#050505] text-white py-32 md:py-48 px-6 md:px-20 animate-fade-in">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24 items-start">
           
-          {/* Left: Project Cover Photo */}
-          <div className="lg:col-span-5 relative group sticky top-48">
+          {/* Left: Project Cover Photo - Sticky only on Desktop (lg and up) */}
+          <div className="lg:col-span-5 relative group lg:sticky lg:top-48">
             <div className="relative z-10 aspect-[3/4] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.8)] border border-white/5 bg-neutral-900">
               <img 
                 src={project.coverImage} 
@@ -76,8 +76,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
                 <span className="text-[8px] tracking-[0.3em] font-bold text-[#c5a059] bg-black/40 backdrop-blur-md px-2 py-1">{project.year}</span>
               </div>
             </div>
-            <div className="absolute -top-10 -left-10 w-40 h-40 border-t border-l border-[#c5a059]/30 -z-0"></div>
-            <div className="absolute -bottom-10 -right-10 w-40 h-40 border-b border-r border-neutral-800 -z-0"></div>
+            {/* Decorative borders - adjusted to hide or stay subtle on mobile */}
+            <div className="absolute -top-6 -left-6 md:-top-10 md:-left-10 w-24 h-24 md:w-40 md:h-40 border-t border-l border-[#c5a059]/30 -z-0"></div>
+            <div className="absolute -bottom-6 -right-6 md:-bottom-10 md:-right-10 w-24 h-24 md:w-40 md:h-40 border-b border-r border-neutral-800 -z-0"></div>
             <div className="mt-8 flex justify-between items-center text-[9px] tracking-[0.6em] text-neutral-600 font-black uppercase">
               <span>FILE NO. {project.id.padStart(4, '0')}</span>
               <span>CINEMATIC ARCHIVE</span>
@@ -94,7 +95,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({ project }) => {
                 </span>
               </div>
               <div className="space-y-2">
-                <h1 className="text-5xl md:text-7xl xl:text-8xl font-serif-cinematic font-bold tracking-tighter leading-none mb-4">
+                <h1 className="text-5xl md:text-7xl xl:text-8xl font-serif-cinematic font-medium tracking-tighter leading-none mb-4">
                   {project.titleKr}
                 </h1>
                 <h2 className="text-xl md:text-2xl font-serif-cinematic italic text-neutral-500 font-light tracking-wide">
