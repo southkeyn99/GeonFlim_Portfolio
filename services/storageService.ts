@@ -1,6 +1,6 @@
 
-import { Project, SiteSettings } from '../types';
-import { INITIAL_PROJECTS, DEFAULT_SETTINGS } from '../constants';
+import { Project, SiteSettings } from '../types.ts';
+import { INITIAL_PROJECTS, DEFAULT_SETTINGS } from '../constants.ts';
 
 const DB_NAME = 'CinematicPortfolioDB';
 const DB_VERSION = 1;
@@ -47,7 +47,6 @@ class StorageService {
       request.onsuccess = async () => {
         const results = request.result;
         if (results.length === 0) {
-          // Seed initial data if empty
           for (const p of INITIAL_PROJECTS) {
             await this.addProject(p);
           }

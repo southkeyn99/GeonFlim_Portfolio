@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Project, ViewState, SiteSettings } from './types';
-import { storageService } from './services/storageService';
-import { DEFAULT_SETTINGS } from './constants';
-import Navbar from './components/Navbar';
-import ProjectDetail from './components/ProjectDetail';
-import AdminPanel from './components/AdminPanel';
-import Home from './components/Home';
-import About from './components/About';
-import Contact from './components/Contact';
+import { Project, ViewState, SiteSettings } from './types.ts';
+import { storageService } from './services/storageService.ts';
+import { DEFAULT_SETTINGS } from './constants.ts';
+import Navbar from './components/Navbar.tsx';
+import ProjectDetail from './components/ProjectDetail.tsx';
+import AdminPanel from './components/AdminPanel.tsx';
+import Home from './components/Home.tsx';
+import About from './components/About.tsx';
+import Contact from './components/Contact.tsx';
 
 const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -39,7 +39,6 @@ const App: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    // Reset password error when switching views
     setAuthError(false);
     setPasswordInput('');
   }, [view]);
@@ -167,7 +166,7 @@ const App: React.FC = () => {
             onSaveSettings={handleSaveSettings}
             onClose={() => {
                 setView('HOME');
-                setIsAuthenticated(false); // Log out on exit
+                setIsAuthenticated(false);
             }}
           />
         );
@@ -209,17 +208,6 @@ const App: React.FC = () => {
       <main>
         {renderContent()}
       </main>
-      
-      <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in { animation: fade-in 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-        .custom-scroll::-webkit-scrollbar { width: 4px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #1a1a1a; }
-        html { scroll-behavior: smooth; }
-      `}</style>
     </div>
   );
 };

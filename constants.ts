@@ -1,5 +1,5 @@
 
-import { Project, SiteSettings } from './types';
+import { Project, SiteSettings } from './types.ts';
 
 export const INITIAL_PROJECTS: Project[] = [
   {

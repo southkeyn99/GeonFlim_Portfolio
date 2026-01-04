@@ -18,12 +18,6 @@
     <meta property="og:description" content="Cinematic works and visual experiments by NamGung Geon.">
     <meta property="og:image" content="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=1200">
 
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="NAMGUNG GEON | Film Director">
-    <meta property="twitter:description" content="Cinematic works and visual experiments by NamGung Geon.">
-    <meta property="twitter:image" content="https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&q=80&w=1200">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -52,7 +46,6 @@
         .border-gold {
             border-color: var(--accent);
         }
-        /* Optimized Scrollbar */
         ::-webkit-scrollbar {
             width: 4px;
         }
@@ -66,7 +59,6 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--accent);
         }
-        /* Mobile Scrollbar Hide */
         @media (max-width: 768px) {
             body {
                 -ms-overflow-style: none;
@@ -76,20 +68,20 @@
                 display: none;
             }
         }
-        
-        /* Global Fade-In utility */
-        .page-transition {
-            animation: fadeIn 0.8s ease-out forwards;
+        .animate-fade-in { 
+          animation: fadeIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; 
         }
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-dom/client": "https://esm.sh/react-dom@^19.2.3/client",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
@@ -98,5 +90,7 @@
 </head>
 <body>
     <div id="root"></div>
+    <!-- Crucial: Entry point script for the application -->
+    <script type="module" src="./index.tsx"></script>
 </body>
 </html>
