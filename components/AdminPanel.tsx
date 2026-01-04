@@ -13,7 +13,7 @@ interface AdminPanelProps {
 }
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUpdate, onDelete, onSaveSettings, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'WORKS' | 'SETTINGS'>('WORKS');
+  const [activeTab, setActiveTab] = useState<'WORKS' | 'SETTINGS' | 'DATABASE'>('WORKS');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [libraryFilter, setLibraryFilter] = useState<Project['category'] | 'ALL'>('ALL');
   const [isMoving, setIsMoving] = useState(false);
@@ -116,16 +116,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
 
     setIsMoving(true);
     
-    // Find the two projects in the actual full list
     const p1 = filteredProjects[indexInFiltered];
     const p2 = filteredProjects[targetIndex];
 
-    // Swap data content between the two IDs
     const p1Update = { ...p2, id: p1.id };
     const p2Update = { ...p1, id: p2.id };
 
     try {
-      // Use sequential awaits to ensure DB consistency
       await (onUpdate as any)(p1Update);
       await (onUpdate as any)(p2Update);
     } catch (err) {
@@ -138,6 +135,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
   const currentLibraryList = libraryFilter === 'ALL' 
     ? projects 
     : projects.filter(p => p.category === libraryFilter);
+
+  // Helper for Exporting Production Code
+  const generateProductionCode = () => {
+    const fullData = {
+      projects,
+      settings
+    };
+    const jsonString = JSON.stringify(fullData, null, 2);
+    return jsonString;
+  };
+
+  const generateShareLink = () => {
+    const fullData = {
+      projects,
+      settings
+    };
+    const encodedData = btoa(encodeURIComponent(JSON.stringify(fullData)));
+    const shareUrl = `${window.location.origin}${window.location.pathname}#sync=${encodedData}`;
+    navigator.clipboard.writeText(shareUrl);
+    alert('Share link copied! Open this link on any device to sync your changes.');
+  };
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -158,9 +176,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
             >
               Site Settings
             </button>
+            <button 
+              onClick={() => setActiveTab('DATABASE')}
+              className={`pb-4 px-2 text-[10px] tracking-[0.4em] uppercase transition-all font-medium ${activeTab === 'DATABASE' ? 'text-[#c5a059] border-b-2 border-[#c5a059]' : 'text-neutral-500 hover:text-white'}`}
+            >
+              Database & Sync
+            </button>
           </div>
 
-          {activeTab === 'WORKS' ? (
+          {activeTab === 'WORKS' && (
             <div className="flex flex-col xl:flex-row gap-16 animate-fade-in">
               {/* Work Form */}
               <div className="w-full xl:w-[60%] bg-[#111] p-8 md:p-12 border border-neutral-800 rounded-sm">
@@ -322,7 +346,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                     </div>
                   </div>
                   
-                  {/* Category Filter for Library */}
                   <div className="flex flex-wrap gap-2">
                     {['ALL', 'DIRECTING', 'AI_FILM', 'CINEMATOGRAPHY', 'STAFF', 'OTHER'].map(cat => (
                       <button 
@@ -339,14 +362,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                 <div className={`space-y-4 max-h-[1200px] overflow-y-auto pr-4 custom-scroll transition-opacity ${isMoving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
                   {currentLibraryList.map((p, idx) => (
                     <div key={p.id} className="group flex gap-6 items-center bg-[#111] border border-neutral-800 p-5 hover:border-[#c5a059]/50 transition-all">
-                      {/* Reorder Controls */}
                       <div className="flex flex-col gap-2 items-center text-neutral-700">
                         <button 
                           type="button"
                           onClick={() => handleMove(idx, 'UP')}
                           disabled={idx === 0 || isMoving}
                           className="hover:text-[#c5a059] disabled:opacity-0 transition-colors p-1"
-                          title="Move Up"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                         </button>
@@ -356,7 +377,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                           onClick={() => handleMove(idx, 'DOWN')}
                           disabled={idx === currentLibraryList.length - 1 || isMoving}
                           className="hover:text-[#c5a059] disabled:opacity-0 transition-colors p-1"
-                          title="Move Down"
                         >
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         </button>
@@ -376,15 +396,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                       </div>
                     </div>
                   ))}
-                  {currentLibraryList.length === 0 && (
-                    <div className="py-20 text-center border border-dashed border-neutral-800 text-neutral-700 text-[10px] uppercase tracking-widest">
-                      Empty Archive in this filter
-                    </div>
-                  )}
                 </div>
               </div>
             </div>
-          ) : (
+          )}
+
+          {activeTab === 'SETTINGS' && (
             <div className="max-w-3xl animate-fade-in mx-auto">
               <header className="mb-12">
                 <h2 className="text-2xl font-serif-cinematic mb-2 uppercase tracking-[0.2em]">Profile & Identity</h2>
@@ -435,6 +452,61 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                   Save Identity Settings
                 </button>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'DATABASE' && (
+            <div className="max-w-4xl animate-fade-in mx-auto space-y-16">
+              <header className="mb-12">
+                <h2 className="text-2xl font-serif-cinematic mb-2 uppercase tracking-[0.2em]">Global Synchronization</h2>
+                <p className="text-[10px] tracking-[0.4em] text-neutral-600 uppercase">Solve device-sync and permanent persistence</p>
+              </header>
+
+              {/* Share Link Strategy */}
+              <div className="bg-[#111] p-10 border border-neutral-800 space-y-6">
+                <h3 className="text-sm tracking-[0.2em] font-bold text-[#c5a059] uppercase">Option 1: Device-to-Device Sync</h3>
+                <p className="text-xs text-neutral-500 leading-relaxed">
+                  IndexedDB는 브라우저 전용 로컬 저장소입니다. 아래 버튼을 눌러 생성된 "공유 링크"를 카카오톡이나 메일로 보내 다른 기기(스마트폰 등)에서 여세요. 
+                  해당 기기에도 당신의 수정 사항이 즉시 복제됩니다.
+                </p>
+                <button 
+                  onClick={generateShareLink}
+                  className="bg-white text-black px-10 py-4 text-[10px] font-black uppercase tracking-widest hover:bg-[#c5a059] transition-colors"
+                >
+                  Generate & Copy Share Link
+                </button>
+              </div>
+
+              {/* Permanent Persistence Strategy */}
+              <div className="bg-[#111] p-10 border border-neutral-800 space-y-8">
+                <div className="space-y-4">
+                  <h3 className="text-sm tracking-[0.2em] font-bold text-[#c5a059] uppercase">Option 2: Permanent Build Reflection</h3>
+                  <p className="text-xs text-neutral-500 leading-relaxed">
+                    모든 방문자가 수정한 내용을 보게 하려면 이 데이터를 <b>저(AI)에게 주고 constants.ts 파일을 업데이트</b>하라고 요청해야 합니다. 
+                    아래 텍스트 박스의 내용을 모두 복사하여 저에게 붙여넣어 주세요.
+                  </p>
+                </div>
+                
+                <div className="relative">
+                   <textarea 
+                    readOnly
+                    value={generateProductionCode()}
+                    className="w-full h-80 bg-[#050505] border border-neutral-800 p-6 text-[10px] font-mono text-neutral-400 overflow-y-auto"
+                   />
+                   <button 
+                    onClick={() => { navigator.clipboard.writeText(generateProductionCode()); alert('Copied to clipboard!'); }}
+                    className="absolute top-4 right-4 bg-neutral-800 px-4 py-2 text-[9px] uppercase tracking-widest font-bold border border-neutral-700 hover:bg-white hover:text-black transition-all"
+                   >
+                     Copy Data JSON
+                   </button>
+                </div>
+                
+                <div className="p-4 border-l-2 border-[#c5a059] bg-[#1a1a1a]">
+                  <p className="text-[10px] text-neutral-400 leading-relaxed italic">
+                    "이 데이터를 줄테니 내 포트폴리오의 constants.ts 파일을 이 최신 정보들로 완전히 업데이트해줘." 라고 저에게 명령하세요.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
         </div>

@@ -29,6 +29,29 @@ const App: React.FC = () => {
   useEffect(() => {
     const initData = async () => {
       try {
+        // Handle Cloud Sync (URL parameter sync)
+        const hash = window.location.hash;
+        if (hash.startsWith('#sync=')) {
+          try {
+            const encoded = hash.split('#sync=')[1];
+            const decoded = JSON.parse(decodeURIComponent(atob(encoded)));
+            
+            if (decoded.projects && decoded.settings) {
+              // Overwrite local DB with shared data
+              for (const p of decoded.projects) {
+                await storageService.addProject(p);
+              }
+              await storageService.saveSettings(decoded.settings);
+              
+              // Clear URL for clean look
+              window.history.replaceState(null, '', window.location.pathname);
+              alert('Cloud Data Synced Successfully!');
+            }
+          } catch (e) {
+            console.error("Sync Failed", e);
+          }
+        }
+
         const [loadedProjects, loadedSettings] = await Promise.all([
           storageService.getProjects(),
           storageService.getSettings()
@@ -47,16 +70,14 @@ const App: React.FC = () => {
   // Final and robust scroll management
   useEffect(() => {
     if (isReturning) {
-      // 1. We are returning from a detail view
       const timer = setTimeout(() => {
         window.scrollTo({ top: scrollPos, behavior: 'auto' });
         setIsReturning(false);
-        lastViewRef.current = view; // Update ref so the 'fresh navigation' block doesn't trigger
-      }, 50); // Small delay to allow DOM to recalculate heights
+        lastViewRef.current = view;
+      }, 50);
       return () => clearTimeout(timer);
     } 
 
-    // 2. This is a fresh navigation or manual view change
     if (view !== lastViewRef.current) {
       window.scrollTo({ top: 0, behavior: 'auto' });
       lastViewRef.current = view;
@@ -104,7 +125,7 @@ const App: React.FC = () => {
 
   const handleProjectSelect = (id: string) => {
     const currentY = window.scrollY;
-    setScrollPos(currentY); // Save current scroll position
+    setScrollPos(currentY);
     setIsReturning(false); 
     setSelectedProjectId(id);
     setPreviousView(view);
@@ -112,7 +133,7 @@ const App: React.FC = () => {
   };
 
   const handleBack = () => {
-    setIsReturning(true); // Signal restoration
+    setIsReturning(true);
     setView(previousView);
   };
 
@@ -256,7 +277,6 @@ const App: React.FC = () => {
                     className={`group cursor-pointer flex flex-col lg:flex-row items-center gap-12 lg:gap-24 animate-fade-in ${idx % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
                     style={{ animationDelay: `${idx * 0.1}s` }}
                   >
-                    {/* Visual Preview */}
                     <div className="w-full lg:w-1/2 aspect-[3/4] overflow-hidden bg-neutral-900 relative">
                       <img 
                         src={project.coverImage} 
@@ -271,7 +291,6 @@ const App: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Metadata Preview */}
                     <div className="w-full lg:w-1/2 flex flex-col space-y-8">
                        <div className="space-y-4">
                          <div className="text-[11px] md:text-xs font-black text-[#c5a059] tracking-[0.4em] uppercase">
@@ -295,7 +314,6 @@ const App: React.FC = () => {
                          </p>
                        </div>
 
-                       {/* Awards Highlights */}
                        {project.awards.length > 0 && (
                          <div className="pt-6 space-y-4">
                            {project.awards.slice(0, 3).map((award, aidx) => (
