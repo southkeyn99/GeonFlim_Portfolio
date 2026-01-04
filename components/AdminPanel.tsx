@@ -15,6 +15,9 @@ interface AdminPanelProps {
 const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUpdate, onDelete, onSaveSettings, onClose }) => {
   const [activeTab, setActiveTab] = useState<'WORKS' | 'SETTINGS'>('WORKS');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [libraryFilter, setLibraryFilter] = useState<Project['category'] | 'ALL'>('ALL');
+  const [isMoving, setIsMoving] = useState(false);
+  
   const [formData, setFormData] = useState<Partial<Project>>({
     category: 'DIRECTING',
     year: '',
@@ -101,21 +104,40 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
     });
   };
 
-  // Function to reorder projects by swapping content but keeping the ID index
-  const handleMove = (index: number, direction: 'UP' | 'DOWN') => {
-    const newIndex = direction === 'UP' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= projects.length) return;
+  const handleMove = async (indexInFiltered: number, direction: 'UP' | 'DOWN') => {
+    if (isMoving) return;
+    
+    const filteredProjects = libraryFilter === 'ALL' 
+      ? projects 
+      : projects.filter(p => p.category === libraryFilter);
+      
+    const targetIndex = direction === 'UP' ? indexInFiltered - 1 : indexInFiltered + 1;
+    if (targetIndex < 0 || targetIndex >= filteredProjects.length) return;
 
-    const p1 = projects[index];
-    const p2 = projects[newIndex];
+    setIsMoving(true);
+    
+    // Find the two projects in the actual full list
+    const p1 = filteredProjects[indexInFiltered];
+    const p2 = filteredProjects[targetIndex];
 
-    // Swap data content between the two fixed ID slots
+    // Swap data content between the two IDs
     const p1Update = { ...p2, id: p1.id };
     const p2Update = { ...p1, id: p2.id };
 
-    onUpdate(p1Update);
-    onUpdate(p2Update);
+    try {
+      // Use sequential awaits to ensure DB consistency
+      await (onUpdate as any)(p1Update);
+      await (onUpdate as any)(p2Update);
+    } catch (err) {
+      console.error("Failed to reorder", err);
+    } finally {
+      setIsMoving(false);
+    }
   };
+
+  const currentLibraryList = libraryFilter === 'ALL' 
+    ? projects 
+    : projects.filter(p => p.category === libraryFilter);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white">
@@ -161,6 +183,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
                           <option value="AI_FILM">AI FILM</option>
                           <option value="CINEMATOGRAPHY">CINEMATOGRAPHY</option>
                           <option value="STAFF">STAFF</option>
+                          <option value="OTHER">OTHER</option>
                         </select>
                       </div>
                       <div className="space-y-2">
@@ -286,49 +309,71 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ projects, settings, onAdd, onUp
 
               {/* Work Library */}
               <div className="w-full xl:w-[40%]">
-                <header className="mb-8">
-                  <h2 className="text-xl font-serif-cinematic mb-2 uppercase tracking-widest">Library</h2>
-                  <p className="text-[9px] tracking-widest text-neutral-600 uppercase">Existing Works: {projects.length}</p>
+                <header className="mb-8 space-y-4">
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <h2 className="text-xl font-serif-cinematic mb-1 uppercase tracking-widest">Library</h2>
+                      <p className="text-[9px] tracking-widest text-neutral-600 uppercase">Archive Count: {projects.length}</p>
+                    </div>
+                  </div>
+                  
+                  {/* Category Filter for Library */}
+                  <div className="flex flex-wrap gap-2">
+                    {['ALL', 'DIRECTING', 'AI_FILM', 'CINEMATOGRAPHY', 'STAFF', 'OTHER'].map(cat => (
+                      <button 
+                        key={cat}
+                        onClick={() => setLibraryFilter(cat as any)}
+                        className={`px-3 py-1.5 text-[8px] tracking-[0.2em] uppercase font-bold border transition-all ${libraryFilter === cat ? 'bg-[#c5a059] text-black border-[#c5a059]' : 'border-neutral-800 text-neutral-500 hover:border-neutral-600'}`}
+                      >
+                        {cat.replace('_', ' ')}
+                      </button>
+                    ))}
+                  </div>
                 </header>
-                <div className="space-y-4 max-h-[1200px] overflow-y-auto pr-4 custom-scroll">
-                  {projects.map((p, idx) => (
+
+                <div className={`space-y-4 max-h-[1200px] overflow-y-auto pr-4 custom-scroll transition-opacity ${isMoving ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+                  {currentLibraryList.map((p, idx) => (
                     <div key={p.id} className="group flex gap-6 items-center bg-[#111] border border-neutral-800 p-5 hover:border-[#c5a059]/50 transition-all">
                       {/* Reorder Controls */}
                       <div className="flex flex-col gap-2 items-center text-neutral-700">
                         <button 
+                          type="button"
                           onClick={() => handleMove(idx, 'UP')}
-                          disabled={idx === 0}
-                          className="hover:text-[#c5a059] disabled:opacity-0 transition-colors"
+                          disabled={idx === 0 || isMoving}
+                          className="hover:text-[#c5a059] disabled:opacity-0 transition-colors p-1"
+                          title="Move Up"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
                         </button>
-                        <span className="text-[8px] font-bold opacity-30">{idx + 1}</span>
+                        <span className="text-[9px] font-black opacity-30 tracking-tighter">{String(idx + 1).padStart(2, '0')}</span>
                         <button 
+                          type="button"
                           onClick={() => handleMove(idx, 'DOWN')}
-                          disabled={idx === projects.length - 1}
-                          className="hover:text-[#c5a059] disabled:opacity-0 transition-colors"
+                          disabled={idx === currentLibraryList.length - 1 || isMoving}
+                          className="hover:text-[#c5a059] disabled:opacity-0 transition-colors p-1"
+                          title="Move Down"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                         </button>
                       </div>
 
                       <div className="w-16 h-20 bg-[#050505] border border-neutral-800 overflow-hidden flex-shrink-0">
-                        <img src={p.coverImage} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                        <img src={p.coverImage} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" alt={p.titleKr} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-[8px] text-[#c5a059] tracking-widest uppercase mb-1">{p.category} &bull; {p.year}</div>
+                        <div className="text-[8px] text-[#c5a059] tracking-widest uppercase mb-1 font-bold">{p.category.replace('_', ' ')} &bull; {p.year}</div>
                         <div className="font-serif-cinematic text-sm truncate">{p.titleKr}</div>
                         <div className="text-[9px] text-neutral-600 uppercase tracking-widest truncate">{p.titleEn}</div>
                       </div>
                       <div className="flex flex-col items-end gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => { setEditingId(p.id); setFormData(p); }} className="text-[10px] uppercase text-neutral-400 hover:text-white underline underline-offset-4">Edit</button>
-                        <button onClick={() => onDelete(p.id)} className="text-[10px] uppercase text-red-900 hover:text-red-500">Delete</button>
+                        <button type="button" onClick={() => { setEditingId(p.id); setFormData(p); window.scrollTo({top: 0, behavior: 'smooth'}); }} className="text-[10px] uppercase text-neutral-400 hover:text-white underline underline-offset-4 font-bold">Edit</button>
+                        <button type="button" onClick={() => onDelete(p.id)} className="text-[10px] uppercase text-red-900 hover:text-red-500 font-bold">Delete</button>
                       </div>
                     </div>
                   ))}
-                  {projects.length === 0 && (
+                  {currentLibraryList.length === 0 && (
                     <div className="py-20 text-center border border-dashed border-neutral-800 text-neutral-700 text-[10px] uppercase tracking-widest">
-                      Your library is empty
+                      Empty Archive in this filter
                     </div>
                   )}
                 </div>
