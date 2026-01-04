@@ -2,11 +2,15 @@
 import { Project, SiteSettings } from '../types.ts';
 import { INITIAL_PROJECTS, DEFAULT_SETTINGS } from '../constants.ts';
 
-// 버전을 v4에서 v5로 변경하여 기존 로컬 스토리지를 초기화하고 최신 데이터를 반영합니다.
+/**
+ * [배포 해결책] 
+ * 버전을 v6로 변경하여 기존 브라우저에 저장된 낡은 데이터를 무효화합니다.
+ * 배포 후에도 데이터가 안 보인다면 이 버전 숫자를 올리는 것이 가장 확실한 방법입니다.
+ */
 const STORAGE_KEYS = {
-  PROJECTS: 'cinematic_archive_projects_v5',
-  SETTINGS: 'cinematic_archive_settings_v5',
-  INITIALIZED: 'cinematic_archive_init_v5'
+  PROJECTS: 'cinematic_archive_projects_v6',
+  SETTINGS: 'cinematic_archive_settings_v6',
+  INITIALIZED: 'cinematic_archive_init_v6'
 };
 
 class StorageService {
@@ -17,7 +21,7 @@ class StorageService {
   private ensureInitialized() {
     const isInitialized = localStorage.getItem(STORAGE_KEYS.INITIALIZED);
     if (!isInitialized) {
-      // 명시적으로 초기화되지 않은 경우 최신 constants.ts 데이터를 삽입
+      // 초기화되지 않은 경우(새 버전 배포 시), constants.ts의 최신 데이터를 삽입합니다.
       localStorage.setItem(STORAGE_KEYS.PROJECTS, JSON.stringify(INITIAL_PROJECTS));
       localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
       localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
