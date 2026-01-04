@@ -17,23 +17,22 @@ const Home: React.FC<HomeProps> = ({ settings, onExplore }) => {
 
   return (
     <div className="relative h-screen w-full overflow-hidden flex items-center justify-center">
-      {/* Background Image - Increased visibility */}
+      {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img 
           src={settings.homeBgImage} 
           alt="Cinematic Background" 
           className="w-full h-full object-cover opacity-60 transition-opacity duration-1000"
         />
-        {/* Refined gradient overlay for better contrast balance */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-black/30 to-black/80"></div>
       </div>
 
       <div className="relative z-10 text-center space-y-8 px-6">
         <h1 className="text-6xl md:text-9xl font-serif-cinematic tracking-[0.2em] animate-fade-in font-bold uppercase drop-shadow-2xl">
-          {settings.directorNameEn}
+          {settings.homeHeroTitle}
         </h1>
         <p className="text-xs md:text-sm tracking-[0.8em] text-white/70 uppercase animate-fade-in drop-shadow-lg" style={{ animationDelay: '0.4s' }}>
-          Film Director & Visual Artist
+          {settings.homeHeroTagline}
         </p>
         <div className="pt-12 animate-fade-in flex flex-col items-center gap-6" style={{ animationDelay: '0.8s' }}>
           <button 

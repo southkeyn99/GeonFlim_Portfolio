@@ -7,6 +7,7 @@ export interface Project {
   titleEn: string;
   genre: string;
   runtime: string;
+  aspectRatio: string; // New field for technical specs
   role: string;
   synopsis: string;
   awards: string[];
@@ -22,6 +23,8 @@ export interface SiteSettings {
   profileImage: string;
   location: string;
   email: string;
+  homeHeroTitle: string;
+  homeHeroTagline: string;
   homeBgImage: string;
 }
 

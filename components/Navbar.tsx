@@ -25,7 +25,7 @@ const Navbar: React.FC<NavbarProps> = ({ currentView, onNavigate }) => {
         className="text-lg md:text-xl font-serif-cinematic tracking-[0.4em] cursor-pointer hover:opacity-70 transition-opacity uppercase font-bold text-white shrink-0 pointer-events-auto mix-blend-difference"
         onClick={() => onNavigate('HOME')}
       >
-        NAMGUNG GEON
+        GEON FILM
       </div>
       
       {/* Category Navigation Bar with Background */}

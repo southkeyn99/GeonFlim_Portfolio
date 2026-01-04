@@ -10,10 +10,6 @@ import Home from './components/Home.tsx';
 import About from './components/About.tsx';
 import Contact from './components/Contact.tsx';
 
-/**
- * Added missing default export and completed the truncated switch-case logic in renderContent.
- * This fixes the error: Module '"file:///App"' has no default export.
- */
 const App: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
@@ -169,44 +165,89 @@ const App: React.FC = () => {
         );
       default:
         return (
-          <div className="pt-32 md:pt-48 pb-32 px-6 md:px-20 animate-fade-in">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center gap-6 mb-20">
-                <div className="h-px w-12 bg-[#c5a059]"></div>
-                <h2 className="text-[11px] tracking-[0.6em] font-black uppercase text-neutral-500">
-                  {view.replace('_', ' ')} Archive
+          <div className="pt-32 md:pt-48 pb-64 px-6 md:px-24 lg:px-40 animate-fade-in">
+            <div className="max-w-7xl mx-auto space-y-48 md:space-y-72">
+              
+              {/* Category Header */}
+              <div className="flex items-center gap-6 mb-32">
+                <div className="h-px w-16 bg-[#c5a059]"></div>
+                <h2 className="text-[12px] tracking-[0.8em] font-black uppercase text-neutral-500">
+                  {view.replace('_', ' ')} ARCHIVE
                 </h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 lg:gap-16">
-                {filteredProjects.map((project) => (
+
+              {/* Work Entries Refined per Reference Image */}
+              <div className="space-y-48 md:space-y-80">
+                {filteredProjects.map((project, index) => (
                   <div 
                     key={project.id} 
-                    className="group cursor-pointer space-y-6"
+                    className={`flex flex-col lg:flex-row gap-12 lg:gap-24 items-center group cursor-pointer ${index % 2 === 1 ? 'lg:flex-row-reverse' : ''}`}
                     onClick={() => handleProjectSelect(project.id)}
                   >
-                    <div className="relative aspect-[3/4] overflow-hidden border border-white/5 bg-neutral-900 shadow-2xl">
-                      <img 
-                        src={project.coverImage} 
-                        alt={project.titleEn} 
-                        className="w-full h-full object-cover grayscale transition-all duration-[2s] group-hover:grayscale-0 group-hover:scale-105"
-                      />
-                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[9px] text-[#c5a059] font-black tracking-widest">{project.year}</span>
-                        <div className="h-px w-4 bg-neutral-800"></div>
-                        <span className="text-[8px] text-neutral-500 font-bold tracking-[0.2em] uppercase">{project.role}</span>
+                    {/* Image Side */}
+                    <div className="w-full lg:w-5/12 relative">
+                      <div className="aspect-[3/4] overflow-hidden bg-neutral-900 border border-white/5 relative z-10 shadow-2xl">
+                        <img 
+                          src={project.coverImage} 
+                          alt={project.titleKr} 
+                          className="w-full h-full object-cover transition-all duration-[2.5s] ease-out group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors duration-700"></div>
                       </div>
-                      <h3 className="text-2xl font-serif-cinematic tracking-tight group-hover:text-[#c5a059] transition-colors">{project.titleKr}</h3>
-                      <div className="text-[10px] text-neutral-600 uppercase tracking-widest">{project.titleEn}</div>
+                      <div className="absolute -inset-10 bg-[#c5a059]/5 blur-3xl -z-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                    </div>
+
+                    {/* Text Side - Refined Typography */}
+                    <div className="w-full lg:w-7/12 space-y-8 flex flex-col justify-center">
+                      <div className="space-y-3">
+                        <div className="text-[#c5a059] text-[12px] font-black tracking-[0.4em] mb-4">{project.year}</div>
+                        <h3 className="text-4xl md:text-5xl lg:text-6xl font-serif-cinematic tracking-tight leading-tight transition-colors duration-500">
+                          {project.titleKr} 
+                          <span className="ml-4 text-xl md:text-2xl lg:text-3xl text-neutral-500 font-light italic opacity-80">
+                            ({project.titleEn})
+                          </span>
+                        </h3>
+                        <div className="pt-2">
+                          <span className="text-[10px] md:text-xs text-[#c5a059] font-bold tracking-widest uppercase bg-[#c5a059]/5 px-3 py-1 border border-[#c5a059]/10">
+                            {project.genre} | {project.runtime} | {project.aspectRatio}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="text-neutral-400 text-sm md:text-base leading-relaxed font-light tracking-wide max-w-xl whitespace-pre-line border-l border-neutral-800 pl-6">
+                        {project.synopsis}
+                      </p>
+
+                      {/* Reference-matched Award List with Orange-Gold Accent */}
+                      {project.awards.length > 0 && (
+                        <div className="space-y-3 pt-2">
+                          {project.awards.map((award, aIdx) => (
+                            <div key={aIdx} className="flex items-start gap-3">
+                              <svg className="w-4 h-4 text-[#c5a059] shrink-0 mt-0.5 opacity-80" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                              </svg>
+                              <span className="text-[10px] md:text-[11px] tracking-widest text-[#c5a059] uppercase font-bold leading-tight">
+                                {award}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="pt-8">
+                        <div className="inline-flex items-center gap-6 text-[9px] tracking-[0.8em] text-neutral-600 font-black uppercase group-hover:text-white transition-all duration-500">
+                          ENTER CASE STUDY
+                          <div className="h-[1px] w-16 bg-neutral-800 group-hover:bg-[#c5a059] transition-all duration-700 group-hover:w-28"></div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
+
               {filteredProjects.length === 0 && (
-                <div className="py-20 text-center text-neutral-700 text-[10px] uppercase tracking-[0.5em]">
-                  No entries found in this category
+                <div className="py-40 text-center text-neutral-800 text-[10px] uppercase tracking-[0.5em] font-black border border-dashed border-neutral-900">
+                  SECTION CURATION IN PROGRESS
                 </div>
               )}
             </div>
